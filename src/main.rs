@@ -10,8 +10,8 @@ use topcoat::font::fontsource::fontsource_font;
 use topcoat::icon::{icon, iconify};
 use topcoat::icon::iconify::iconify_icon;
 use topcoat::router::RouterBuilderDiscoverExt;
-use topcoat::runtime::{shard, signal};
-use topcoat::view::attributes;
+use topcoat::runtime::{shard, signal, Event, Signal};
+use topcoat::view::{attributes, component};
 use crate::components::badge::{badge, BadgeVariant};
 use crate::components::button::{button, ButtonSize, ButtonVariant};
 use crate::components::card::{card, card_header, card_title};
@@ -115,9 +115,10 @@ fn status_variant(status: &str) -> BadgeVariant {
 }
 
 /// A table of deployments with pagination underneath.
-#[shard]
+#[component]
 async fn aliments_list(cx: &Cx) -> Result<impl View> {
     let rows = &ALIMENTS;
+    let test_signal = signal(cx, || false);
 
     Ok(view! {
         card(
@@ -148,8 +149,10 @@ async fn aliments_list(cx: &Cx) -> Result<impl View> {
                                 button(
                                     size: ButtonSize::Icon,
                                     variant: ButtonVariant::Outline,
+                                    attrs: attributes! {
+                                        @click=$(|_e: Event| update_quantity(aliment, -1i8))
+                                    }
                                     icon(data: lucide::MINUS, label: "Enlever 1")
-                                    @click=$(|_e| update_quantity(&aliment, -1))
                                 )
                                 (aliment.quantity)
                                 button(
