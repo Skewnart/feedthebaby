@@ -1,0 +1,1 @@
+SELECT id FROM login WHERE plain_pwd = $1;

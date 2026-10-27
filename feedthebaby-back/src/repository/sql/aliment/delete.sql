@@ -1,0 +1,3 @@
+DELETE FROM aliment
+WHERE id = $1
+RETURNING id;

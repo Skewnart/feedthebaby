@@ -1,0 +1,26 @@
+meta {
+  name: POST /login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurlapi}}{{prefixapi}}/connection/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "plain_pwd": ""
+  }
+}
+
+script:post-response {
+  bru.setVar("token",res.body)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

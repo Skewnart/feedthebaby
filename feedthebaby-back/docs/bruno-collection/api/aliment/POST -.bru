@@ -1,0 +1,25 @@
+meta {
+  name: POST /
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseurlapi}}{{prefixapi}}/aliment
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "test",
+    "quantity": 10,
+    "expire_at": "26/11/2026",
+    "aliment_type": "PETIT_ROND"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

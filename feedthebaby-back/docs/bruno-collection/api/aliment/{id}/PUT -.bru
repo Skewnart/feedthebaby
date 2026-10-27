@@ -1,0 +1,22 @@
+meta {
+  name: PUT /
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurlapi}}{{prefixapi}}/aliment/{{id}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "quantity": 50
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
