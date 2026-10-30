@@ -5,18 +5,30 @@ meta {
 }
 
 post {
-  url: {{baseurlapi}}{{prefixapi}}/aliment
+  url: {{baseurlapi}}{{prefixapi}}/aliments
   body: json
   auth: inherit
 }
 
 body:json {
-  {
-    "name": "test",
-    "quantity": 10,
-    "expire_at": "26/11/2026",
-    "aliment_type": "PETIT_ROND"
-  }
+  [
+      {
+        "id":7,
+        "name": "test5",
+        "quantity": 20,
+        "expire_at": "26/11/2026",
+        "aliment_type": "20g",
+        "persistence_type": "UPDATE"
+      },
+      {
+        "id":1,
+        "name": "",
+        "quantity": 30,
+        "expire_at": "",
+        "aliment_type": "",
+        "persistence_type": "UPDATE"
+      }
+  ]
 }
 
 settings {

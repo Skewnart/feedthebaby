@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "name": "Feed the baby",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "size": 0.004910469055175781,
+  "filesCount": 34,
+  "presets": {
+    "requestType": "http",
+    "requestUrl": "{{baseurl}}/"
+  }
+}
