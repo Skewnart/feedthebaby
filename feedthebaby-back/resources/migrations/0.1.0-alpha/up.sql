@@ -1,9 +1,3 @@
-CREATE TYPE "PersistenceType" AS ENUM (
-    'CREATE',
-    'UPDATE',
-    'DELETE'
-);
-
 CREATE TABLE aliment (
     id              BIGSERIAL PRIMARY KEY,
     name            VARCHAR(64) UNIQUE NOT NULL,
