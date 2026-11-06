@@ -2,7 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import '../app.css';
 
-	import type { AlimentOutDTO } from '$lib/models/aliment';
+	import type { AlimentInNewIdDTO, AlimentOutDTO } from '$lib/models/aliment';
 	import { get_all, post_bulk } from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Toast from '$lib/components/Toast.svelte';
@@ -121,10 +121,6 @@
 				persistence_type: aliment.persistence_type || 'UPDATE'
 			};
 		});
-
-		if (amount > 0) {
-			console.log('aliments après augmentation :', $state.snapshot(aliments));
-		}
 	}
 
 	function confirmDeleteAliment() {
@@ -161,10 +157,19 @@
 				error = 'Erreur pendant la sauvegarde des aliments.';
 				return;
 			}
+			const createdIdMappings = await response.json() as AlimentInNewIdDTO[];
+			const newIdByOldId = new Map(createdIdMappings.map(({ old_id, new_id }) => [old_id, new_id]));
 
 			aliments = aliments
 				.filter(aliment => aliment.persistence_type !== 'DELETE')
-				.map(({ quantity_change, ...aliment }) => ({ ...aliment, persistence_type: '' }));
+				.map(({ quantity_change, ...aliment }) => ({
+					...aliment,
+					id: aliment.persistence_type === 'CREATE'
+						? newIdByOldId.get(aliment.id) ?? aliment.id
+						: aliment.id,
+					persistence_type: ''
+				}));
+				
 			isSuccessToastVisible = true;
 				
 		} catch {

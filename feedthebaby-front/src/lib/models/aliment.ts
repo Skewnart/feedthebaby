@@ -6,6 +6,11 @@ export interface AlimentInDTO {
     aliment_type: string;
 }
 
+export interface AlimentInNewIdDTO {
+    old_id: number;
+    new_id: number;
+}
+
 export interface AlimentOutDTO {
     id:number;
     name: string;
