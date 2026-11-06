@@ -1,12 +1,15 @@
 CREATE TABLE aliment (
-    id              BIGSERIAL PRIMARY KEY,
-    name            VARCHAR(64) UNIQUE NOT NULL,
-    quantity        INTEGER NOT NULL,
-    expire_at       VARCHAR(16) NOT NULL,
-    aliment_type    VARCHAR(64) NOT NULL
+    id bigserial NOT NULL,
+    "name" varchar(64) NOT NULL,
+    quantity int4 NOT NULL,
+    expire_at varchar(16) NOT NULL,
+    aliment_type varchar(64) NOT NULL,
+    CONSTRAINT aliment_name_aliment_type_key UNIQUE (name, aliment_type),
+    CONSTRAINT aliment_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE login (
-    id              BIGSERIAL PRIMARY KEY,
-    plain_pwd       VARCHAR(64) NOT NULL
+  id bigserial NOT NULL,
+  plain_pwd varchar(64) NOT NULL,
+  CONSTRAINT login_pkey PRIMARY KEY (id)
 );

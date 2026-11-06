@@ -7,6 +7,7 @@ pub enum AppRequestError {
     Unauthorized(String),
     InternalTokenError(String),
     InternalDbError(DbError),
+    InternalSerializationError(serde_json::Error),
 }
 
 impl ResponseError for AppRequestError {
@@ -18,9 +19,11 @@ impl ResponseError for AppRequestError {
             AppRequestError::InternalTokenError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
             }
+            AppRequestError::InternalSerializationError(ref err) => {
+                HttpResponse::InternalServerError().body(err.to_string())
+            }
 
             AppRequestError::InternalDbError(ref err) => (*err).error_response(),
-
         }
     }
 }

@@ -2,7 +2,8 @@ use crate::errors::app_request_error::AppRequestError;
 use crate::errors::db_error::DbError;
 use crate::middlewares::authentication_middleware::AuthenticationMiddleware;
 
-use crate::models::aliment::AlimentInDTO;
+use crate::models::aliment::{AlimentInDTO, AlimentOutNewIdDTO};
+use crate::models::enums::persistence_type::PersistenceType;
 use crate::repository::aliment_repository;
 use actix_web::{
     HttpResponse,
@@ -10,19 +11,16 @@ use actix_web::{
 };
 use deadpool_postgres::{Client, Pool};
 use log::info;
-use crate::models::enums::PersistenceType::PersistenceType;
 
 const ENDPOINT: &str = "/aliments";
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope(ENDPOINT)
-            .wrap(AuthenticationMiddleware)
-            .service(
-                web::resource("")
-                    .route(web::get().to(get))
-                    .route(web::post().to(post)),
-            )
+        web::scope(ENDPOINT).wrap(AuthenticationMiddleware).service(
+            web::resource("")
+                .route(web::get().to(get))
+                .route(web::post().to(post)),
+        ),
     );
 }
 
@@ -56,22 +54,28 @@ async fn post(
 
     let aliment_json = aliment_json.into_inner();
 
+    // Sending new ids back to the client for the newly created aliments
+    let mut new_ids: Vec<AlimentOutNewIdDTO> = Vec::with_capacity(aliment_json.len());
+
     for aliment in aliment_json {
         match aliment.persistence_type {
-            PersistenceType::CREATE => {
+            PersistenceType::Create => {
                 let aliment_id = aliment_repository::insert(&db_client, &aliment)
                     .await
                     .map_err(AppRequestError::InternalDbError)?;
 
-                info!("Insertion aliment avec ID : {}", aliment_id);
+                new_ids.push(AlimentOutNewIdDTO {
+                    old_id: aliment.id,
+                    new_id: aliment_id,
+                });
             }
-            PersistenceType::UPDATE => {
+            PersistenceType::Update => {
                 info!("Mise à jour aliment avec ID : {}", aliment.id);
                 aliment_repository::update(&db_client, aliment.quantity, aliment.id)
                     .await
                     .map_err(AppRequestError::InternalDbError)?;
             }
-            PersistenceType::DELETE => {
+            PersistenceType::Delete => {
                 info!("Suppression aliment avec ID : {}", aliment.id);
                 aliment_repository::delete(&db_client, aliment.id)
                     .await
@@ -80,5 +84,7 @@ async fn post(
         }
     }
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().body(
+        serde_json::to_string(&new_ids).map_err(AppRequestError::InternalSerializationError)?,
+    ))
 }

@@ -1,1 +1,1 @@
-pub mod PersistenceType;
+pub mod persistence_type;
