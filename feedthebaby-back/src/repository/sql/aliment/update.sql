@@ -1,4 +1,8 @@
 UPDATE aliment
-    SET quantity = $1
-WHERE id = $2
+    SET
+        name = $2,
+        quantity = $3,
+        expire_at = $4,
+        aliment_type = $5
+WHERE id = $1
 RETURNING id;

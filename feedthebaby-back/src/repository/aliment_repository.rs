@@ -22,12 +22,18 @@ pub async fn get(client: &Client) -> Result<Vec<AlimentOutDTO>, DbError> {
     Ok(aliments)
 }
 
-pub async fn update(client: &Client, quantity: i32, id: i64) -> Result<(), DbError> {
+pub async fn update(client: &Client, aliment_dto: &AlimentInDTO) -> Result<(), DbError> {
     let _stmt = include_str!("sql/aliment/update.sql");
     let _stmt = client.prepare(_stmt).await?;
 
     client
-        .query(&_stmt, &[&quantity, &id])
+        .query(&_stmt, &[
+            &aliment_dto.id,
+            &aliment_dto.name,
+            &aliment_dto.quantity,
+            &aliment_dto.expire_at,
+            &aliment_dto.aliment_type,
+        ])
         .await?
         .iter()
         .map(|row| row.get(0))

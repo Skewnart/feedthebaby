@@ -71,7 +71,7 @@ async fn post(
             }
             PersistenceType::Update => {
                 info!("Mise à jour aliment avec ID : {}", aliment.id);
-                aliment_repository::update(&db_client, aliment.quantity, aliment.id)
+                aliment_repository::update(&db_client, &aliment)
                     .await
                     .map_err(AppRequestError::InternalDbError)?;
             }
