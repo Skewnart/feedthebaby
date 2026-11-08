@@ -10,7 +10,6 @@
 	const TITLE = "Feed the baby";
 	const alimentGroups = [
 		{ type: '10g', title: 'Petit rond (10g)' },
-		{ type: '20g', title: 'Rectangle (20g)' },
 		{ type: '25g', title: 'Rectangle (25g)' }
 	] as const;
 
@@ -25,12 +24,20 @@
 		const [year, month, day] = date.split('-');
 		return `${day}/${month}/${year}`;
 	}
+
+	function formatDateForInput(date: string) {
+		if (date.includes('-')) return date;
+		const [day, month, year] = date.split('/');
+		return `${year}-${month}-${day}`;
+	}
+
 	const props = $props();
 	let error = $state("");
 	let aliments = $state<(AlimentOutDTO & { quantity_change?: number })[] | undefined>(undefined);
 	let isSaving = $state(false);
 	let isSuccessToastVisible = $state(false);
 	let isAddPanelOpen = $state(false);
+	let editingAlimentId = $state<number | undefined>(undefined);
 	let deleteCandidateId = $state<number | undefined>(undefined);
 	let nameInput = $state<HTMLInputElement | undefined>(undefined);
 	let newAlimentName = $state("");
@@ -53,6 +60,7 @@
 	const hasDuplicateAlimentName = $derived(
 		newAlimentName.trim() !== "" && (aliments?.some(aliment =>
 			aliment.persistence_type !== 'DELETE' &&
+			aliment.id !== editingAlimentId &&
 			aliment.aliment_type === newAlimentType &&
 			aliment.name.trim().toLocaleLowerCase('fr') === newAlimentName.trim().toLocaleLowerCase('fr')
 		) ?? false)
@@ -84,7 +92,26 @@
 	function addAliment(event: SubmitEvent) {
 		event.preventDefault();
 		const name = newAlimentName.trim();
-		if (!name || !aliments || hasDuplicateAlimentName) return;
+		if (!name || !aliments || hasDuplicateAlimentName || hasAlreadyDeleteAliment) return;
+
+		if (editingAlimentId !== undefined) {
+			aliments = aliments.map(aliment => {
+				if (aliment.id !== editingAlimentId) return aliment;
+
+				const originalQuantity = aliment.quantity - (aliment.quantity_change ?? 0);
+				return {
+					...aliment,
+					name,
+					quantity: newQuantity,
+					quantity_change: newQuantity - originalQuantity,
+					expire_at: formatDateForStorage(newExpireAt),
+					aliment_type: newAlimentType,
+					persistence_type: aliment.persistence_type === 'CREATE' ? 'CREATE' : 'UPDATE'
+				};
+			});
+			closeAddPanel();
+			return;
+		}
 
 		const aliment = {
 			id: Math.max(0, ...aliments.map(item => item.id)) + 1,
@@ -99,7 +126,7 @@
 		newQuantity = 1;
 		newAlimentType = '10g';
 		newExpireAt = getTodayDate();
-		isAddPanelOpen = false;
+		closeAddPanel();
 	}
 
 	function changeQuantity(id: number, amount: number) {
@@ -180,9 +207,35 @@
 	}
 
 	async function openAddPanel() {
+		editingAlimentId = undefined;
+		newAlimentName = "";
+		newQuantity = 1;
+		newAlimentType = '10g';
+		newExpireAt = getTodayDate();
 		isAddPanelOpen = true;
 		await tick();
 		nameInput?.focus();
+	}
+
+	async function openEditPanel(aliment: AlimentOutDTO & { quantity_change?: number }) {
+		editingAlimentId = aliment.id;
+		newAlimentName = aliment.name;
+		newQuantity = aliment.quantity;
+		newAlimentType = aliment.aliment_type as (typeof alimentGroups)[number]['type'];
+		newExpireAt = formatDateForInput(aliment.expire_at);
+		isAddPanelOpen = true;
+		await tick();
+		nameInput?.focus();
+	}
+
+	function closeAddPanel() {
+		isAddPanelOpen = false;
+		editingAlimentId = undefined;
+	}
+
+	function handleAlimentRowClick(event: PointerEvent, aliment: AlimentOutDTO & { quantity_change?: number }) {
+		if ((event.target as HTMLElement).closest('button')) return;
+		openEditPanel(aliment);
 	}
 
 </script>
@@ -239,8 +292,13 @@
 									</tr>
 								{:else}
 								{#each group.aliments as aliment}
-									<tr>
-										<td class="text-left">{aliment.name}</td>
+									<tr
+										class="cursor-pointer"
+										onpointerup={(event) => handleAlimentRowClick(event, aliment)}
+									>
+										<td class="text-left">
+											<button class="text-left" type="button" aria-label="Modifier {aliment.name}" onclick={() => openEditPanel(aliment)}>{aliment.name}</button>
+										</td>
 										<td class="text-center">
 											<div class="inline-flex items-center gap-2">
 												<button class="btn btn-ghost btn-square btn-xs" type="button" aria-label="Diminuer la quantité de {aliment.name}" disabled={aliment.quantity <= 0} onclick={() => changeQuantity(aliment.id, -1)}>-</button>
@@ -275,11 +333,11 @@
 </div>
 
 {#if isAddPanelOpen}
-	<button class="fixed inset-0 z-40 cursor-default bg-black/40" type="button" aria-label="Fermer le panneau d'ajout" onclick={() => isAddPanelOpen = false}></button>
+	<button class="fixed inset-0 z-40 cursor-default bg-black/40" type="button" aria-label="Fermer le panneau d'ajout" onclick={closeAddPanel}></button>
 	<dialog open class="fixed inset-y-0 right-0 z-50 m-0 w-full max-w-md overflow-y-auto border-0 bg-base-100 p-6 shadow-2xl" style="position: fixed; inset: 0 0 0 auto; margin: 0; width: min(100%, 28rem); height: 100dvh; max-height: none;" aria-labelledby="add-aliment-title">
 		<div class="mb-8 flex items-center justify-between gap-4">
-			<h2 id="add-aliment-title" class="text-2xl font-semibold">Ajouter un aliment</h2>
-			<button class="btn btn-ghost btn-sm" type="button" aria-label="Fermer" onclick={() => isAddPanelOpen = false}>✕</button>
+			<h2 id="add-aliment-title" class="text-2xl font-semibold">{editingAlimentId !== undefined ? 'Modifier un aliment' : 'Ajouter un aliment'}</h2>
+			<button class="btn btn-ghost btn-sm" type="button" aria-label="Fermer" onclick={closeAddPanel}>✕</button>
 		</div>
 		<form class="flex flex-col gap-5" onsubmit={addAliment}>
 			<label class="form-control w-full">
@@ -309,8 +367,10 @@
 				<input class="input input-bordered w-full" type="date" bind:value={newExpireAt} required />
 			</label>
 			<div class="mt-4 flex justify-end gap-3">
-				<button class="btn btn-ghost" type="button" onclick={() => isAddPanelOpen = false}>Annuler</button>
-				<button class="btn btn-primary" type="submit" disabled={hasDuplicateAlimentName}>Ajouter</button>
+				<button class="btn btn-ghost" type="button" onclick={closeAddPanel}>Annuler</button>
+				<button class="btn btn-primary" type="submit" disabled={hasDuplicateAlimentName || hasAlreadyDeleteAliment}>
+					{editingAlimentId !== undefined ? 'Enregistrer' : 'Ajouter'}
+				</button>
 			</div>
 		</form>
 	</dialog>
