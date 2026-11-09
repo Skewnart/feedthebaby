@@ -45,7 +45,7 @@
 	<div class="w-full max-w-xs">
 		<div class="card shadow-lg bg-base-100 p-8">
 			<h1 class="text-3xl font-bold text-center mb-8">{TITLE}</h1>
-			<form {onsubmit}>
+			<form {onsubmit} autocomplete="on">
 				<div class="mb-4">
 					<label class="input w-full">
 						<svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -65,6 +65,7 @@
 						<input
 							id="password"
 							type="password"
+							autocomplete="current-password"
 							placeholder="Mot de passe de connexion"
 							required
 							bind:value={password}
