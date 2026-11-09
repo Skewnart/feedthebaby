@@ -11,7 +11,7 @@ export async function login(password: string) : Promise<Response> {
 	});
 }
 
-export async function get_all(token: String) : Promise<AlimentInDTO[]> {
+export async function get_all(token: String) : Promise<Response> {
 	
 	return fetch(`${PUBLIC_API_URL}/aliments`, {
 		method: 'GET',
@@ -19,8 +19,6 @@ export async function get_all(token: String) : Promise<AlimentInDTO[]> {
 			'Content-Type': 'application/json',
 			'Authorization': `Bearer ${token}`
 		}
-	}).then(response => {
-		return response.text().then(t => JSON.parse(t));
 	});
 }
 

@@ -2,7 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import '../app.css';
 
-	import type { AlimentInNewIdDTO, AlimentOutDTO } from '$lib/models/aliment';
+	import type { AlimentInDTO, AlimentInNewIdDTO, AlimentOutDTO } from '$lib/models/aliment';
 	import { get_all, post_bulk } from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Toast from '$lib/components/Toast.svelte';
@@ -86,7 +86,15 @@
 	const token = data.token;
 	
 	onMount(async () => {
-		get_all(token).then(al => aliments = al.map(aliment => ({ ...aliment, persistence_type: '' })));
+		const response = await get_all(token);
+		if (response.status === 401) {
+			window.location.assign('/logout');
+			return;
+		}
+
+		const al = await response.json();
+		aliments = (al as AlimentInDTO[])
+			.map(aliment => ({ ...aliment, persistence_type: '' }));
 	});
 
 	function addAliment(event: SubmitEvent) {
