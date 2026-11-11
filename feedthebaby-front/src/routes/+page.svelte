@@ -10,7 +10,10 @@
 	const TITLE = "Feed the baby";
 	const alimentGroups = [
 		{ type: '10g', title: 'Petit rond (10g)' },
-		{ type: '25g', title: 'Rectangle (25g)' }
+		{ type: '25g', title: 'Rectangle (25g)' },
+		{ type: 'yooji', title: 'Yooji' },
+		{ type: 'petits_pots', title: 'Petits pots' },
+		{ type: 'popote', title: 'Popote' }
 	] as const;
 
 	function getTodayDate() {
@@ -241,11 +244,6 @@
 		editingAlimentId = undefined;
 	}
 
-	function handleAlimentRowClick(event: PointerEvent, aliment: AlimentOutDTO & { quantity_change?: number }) {
-		if ((event.target as HTMLElement).closest('button')) return;
-		openEditPanel(aliment);
-	}
-
 </script>
 
 <svelte:head>
@@ -256,8 +254,8 @@
 <div class="flex justify-center">
 	<div class="md:w-3/4 w-full mt-4 mx-4">
 		<header class="mt-10 mb-8">
-			<h1 class="text-3xl md:text-4xl font-semibold">Qu'est-ce qu'il y a dans mon frigo ?</h1>
-			<p class="italic text-lg mt-2">du moins dans le congel</p>
+			<h1 class="text-3xl md:text-4xl font-semibold">Qu'y a-t-il au menu ?</h1>
+			<p class="italic text-lg mt-2">au moins pour le petit</p>
 		</header>
 		
 		{#if error}
@@ -273,58 +271,39 @@
 			<div class="mb-2">
 				<input class="input input-bordered w-full" placeholder="Écrivez pour commencer à chercher..." bind:value={alimentQuery} aria-label="Recherche dossiers" />
 			</div>
-			<div class="overflow-x-auto mt-6">
-				<table class="table bg-base-100 rounded-none" aria-label="Aliments">
-					<thead>
-						<tr>
-							<th class="text-left">Nom</th>
-							<th class="text-center">Quantité</th>
-							<th class="text-right">Date de conception</th>
-						</tr>
-					</thead>
-					{#if alimentQuery && filteredAliments?.length === 0}
-						<tbody>
-							<tr>
-								<td colspan="3" class="text-center opacity-60">Aucun dossier ne correspond à la recherche</td>
-							</tr>
-						</tbody>
-					{:else}
-						{#each groupedAliments as group}
-							<tbody>
-								<tr>
-									<th colspan="3" scope="rowgroup" class="text-left normal-case text-base font-semibold opacity-100">{group.title}</th>
-								</tr>
-								{#if group.aliments.length === 0}
-									<tr>
-										<td colspan="3" class="text-center opacity-60">Aucun aliment dans ce groupe</td>
-									</tr>
-								{:else}
-								{#each group.aliments as aliment}
-									<tr
-										class="cursor-pointer"
-										onpointerup={(event) => handleAlimentRowClick(event, aliment)}
-									>
-										<td class="text-left">
-											<button class="text-left" type="button" aria-label="Modifier {aliment.name}" onclick={() => openEditPanel(aliment)}>{aliment.name}</button>
-										</td>
-										<td class="text-center">
-											<div class="inline-flex items-center gap-2">
-												<button class="btn btn-ghost btn-square btn-xs" type="button" aria-label="Diminuer la quantité de {aliment.name}" disabled={aliment.quantity <= 0} onclick={() => changeQuantity(aliment.id, -1)}>-</button>
-												<span class="min-w-6 text-center">{aliment.quantity}</span>
-												<button class="btn btn-ghost btn-square btn-xs" type="button" aria-label="Augmenter la quantité de {aliment.name}" onclick={() => changeQuantity(aliment.id, 1)}>+</button>
-												{#if aliment.quantity_change}
-													<span class="font-semibold tabular-nums" class:text-green-800={aliment.quantity_change > 0} class:text-red-800={aliment.quantity_change < 0}>({aliment.quantity_change > 0 ? '+' : ''}{aliment.quantity_change})</span>
-												{/if}
+			<div class="mt-6">
+				{#if alimentQuery && filteredAliments?.length === 0}
+					<p class="py-8 text-center opacity-60">Aucun dossier ne correspond à la recherche</p>
+				{:else}
+					{#each groupedAliments as group}
+						<section class="mb-8" aria-labelledby="group-{group.type}">
+							<h2 id="group-{group.type}" class="mb-3 text-left text-base font-semibold">{group.title}</h2>
+							{#if group.aliments.length === 0}
+								<p class="py-4 text-center opacity-60">Aucun aliment dans ce groupe</p>
+							{:else}
+								<div class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Aliments {group.title}">
+									{#each group.aliments as aliment}
+										{@const cappedQuantity = Math.min(Math.max(aliment.quantity, 0), 42)}
+										<article class="card relative border border-base-300 bg-base-100 shadow-md transition-colors hover:border-primary">
+											<button class="absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" type="button" aria-label="Modifier {aliment.name}" onclick={() => openEditPanel(aliment)}></button>
+											<div class="pointer-events-none relative z-10 flex min-h-32 flex-col justify-between gap-4 p-4">
+												<h3 class="break-words text-center font-semibold">{aliment.name}</h3>
+												<div class="flex flex-wrap items-center justify-center gap-2">
+													<button class="btn btn-ghost btn-square btn-xs pointer-events-auto" type="button" aria-label="Diminuer la quantité de {aliment.name}" disabled={aliment.quantity <= 0} onclick={() => changeQuantity(aliment.id, -1)}>-</button>
+													<div class="radial-progress" class:text-primary={cappedQuantity > 21} class:text-orange-500={cappedQuantity >= 10 && cappedQuantity <= 21} class:text-red-600={cappedQuantity < 10} style={`--value: ${cappedQuantity / 42 * 100}; --size: 3.25rem; --thickness: 3px;`} role="progressbar" aria-label="Quantité restante de {aliment.name}" aria-valuemin="0" aria-valuemax="42" aria-valuenow={cappedQuantity}>{aliment.quantity}</div>
+													<button class="btn btn-ghost btn-square btn-xs pointer-events-auto" type="button" aria-label="Augmenter la quantité de {aliment.name}" onclick={() => changeQuantity(aliment.id, 1)}>+</button>
+													{#if aliment.quantity_change}
+														<span class="font-semibold tabular-nums" class:text-green-800={aliment.quantity_change > 0} class:text-red-800={aliment.quantity_change < 0}>({aliment.quantity_change > 0 ? '+' : ''}{aliment.quantity_change})</span>
+													{/if}
+												</div>
 											</div>
-										</td>
-										<td class="text-right">{aliment.expire_at}</td>
-									</tr>
-								{/each}
-								{/if}
-							</tbody>
-							{/each}
-						{/if}
-				</table>
+										</article>
+									{/each}
+								</div>
+							{/if}
+						</section>
+					{/each}
+				{/if}
 			</div>
 			<button class="btn btn-primary btn-block my-4" type="button" onclick={openAddPanel}>Ajouter un aliment</button>
 			{#if hasPendingChanges}
@@ -366,14 +345,14 @@
 				<span class="label-text mb-2">Groupe</span>
 				<select class="select select-bordered w-full" bind:value={newAlimentType}>
 					{#each alimentGroups as group}
-						<option value={group.type}>{group.type}</option>
+						<option value={group.type}>{group.title}</option>
 					{/each}
 				</select>
 			</label>
-			<label class="form-control w-full">
+			<!-- <label class="form-control w-full">
 				<span class="label-text mb-2">Date de conception</span>
 				<input class="input input-bordered w-full" type="date" bind:value={newExpireAt} required />
-			</label>
+			</label> -->
 			<div class="mt-4 flex justify-end gap-3">
 				<button class="btn btn-ghost" type="button" onclick={closeAddPanel}>Annuler</button>
 				<button class="btn btn-primary" type="submit" disabled={hasDuplicateAlimentName || hasAlreadyDeleteAliment}>
