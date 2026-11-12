@@ -289,9 +289,9 @@
 											<div class="pointer-events-none relative z-10 flex min-h-32 flex-col justify-between gap-4 p-4">
 												<h3 class="break-words text-center font-semibold">{aliment.name}</h3>
 												<div class="flex flex-wrap items-center justify-center gap-2">
-													<button class="btn btn-ghost btn-square btn-xs pointer-events-auto" type="button" aria-label="Diminuer la quantité de {aliment.name}" disabled={aliment.quantity <= 0} onclick={() => changeQuantity(aliment.id, -1)}>-</button>
+													<button class="btn btn-ghost btn-square btn-xl pointer-events-auto" type="button" aria-label="Diminuer la quantité de {aliment.name}" disabled={aliment.quantity <= 0} onclick={() => changeQuantity(aliment.id, -1)}>-</button>
 													<div class="radial-progress" class:text-primary={cappedQuantity > 21} class:text-orange-500={cappedQuantity >= 10 && cappedQuantity <= 21} class:text-red-600={cappedQuantity < 10} style={`--value: ${cappedQuantity / 42 * 100}; --size: 3.25rem; --thickness: 3px;`} role="progressbar" aria-label="Quantité restante de {aliment.name}" aria-valuemin="0" aria-valuemax="42" aria-valuenow={cappedQuantity}>{aliment.quantity}</div>
-													<button class="btn btn-ghost btn-square btn-xs pointer-events-auto" type="button" aria-label="Augmenter la quantité de {aliment.name}" onclick={() => changeQuantity(aliment.id, 1)}>+</button>
+													<button class="btn btn-ghost btn-square btn-xl pointer-events-auto" type="button" aria-label="Augmenter la quantité de {aliment.name}" onclick={() => changeQuantity(aliment.id, 1)}>+</button>
 													{#if aliment.quantity_change}
 														<span class="font-semibold tabular-nums" class:text-green-800={aliment.quantity_change > 0} class:text-red-800={aliment.quantity_change < 0}>({aliment.quantity_change > 0 ? '+' : ''}{aliment.quantity_change})</span>
 													{/if}
