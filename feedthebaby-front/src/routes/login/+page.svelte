@@ -27,7 +27,12 @@
 			}
 
 			const token = await login_response.text();
-			await set_token(token);
+			const cookie_response = await set_token(token);
+			if (!cookie_response.ok) {
+				error = "Impossible d'enregistrer la session.";
+				callPending = false;
+				return;
+			}
 
 			goto('/');
 		} catch (e) {

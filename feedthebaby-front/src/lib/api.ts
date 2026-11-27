@@ -39,6 +39,6 @@ export async function set_token(token: string) : Promise<Response> {
 	return fetch(`/cookies`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		body: `token=${token}`
+		body: new URLSearchParams({ token })
 	});
 }
